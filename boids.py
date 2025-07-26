@@ -271,3 +271,34 @@ if __name__ == '__main__':
         # Boolean matrix and array of boid positions
         # vel = pos*D.sum(axis=1).reshape(N, 1) - D.dot(pos)
         # return vel
+
+# Experiments!
+# 1. Implement obstacle avoidance by writing a new method avoidObstacle() and applying it right after 
+# you apply the  three rules: self.vel += self.applyRules() , self.vel += self.avoidObstacle(). The 
+# avoidObstacle method should use a predefined tuple (x, y, R) to add an additional velocity term to a 
+# boid, pushing it away from the obstacle location (x, y), but only when the boid is within radius R of 
+# the obstacle. Think of this as the distance at which a boid sees the obstacle and steers away from it. 
+# You can specify the (x, y, R) tuple using a command line option, e.g. --obstacle 100,100,50. The obstacle 
+# should be drawn as a circle on the screen using matplotlib's Circle class.
+# 2. Implement a "leader" boid that is followed by the rest of the flock. The leader should be a
+# boid that is controlled by the user using the arrow keys. The leader should be drawn in a different
+# color and should be followed by the rest of the flock. The leader's position should be updated based on
+# the arrow key presses, and the rest of the flock should follow the leader's position. You can use
+# the matplotlib's event handling to capture key presses and update the leader's position accordingly.
+# 3. Implement a "predator" boid that chases the flock. The predator should be a boid that is controlled
+# by the user using the WASD keys. The predator should be drawn in a different color and should chase
+# the flock. The predator's position should be updated based on the WASD key presses, and the flock should
+# try to avoid the predator. You can use the matplotlib's event handling to capture key presses
+# and update the predator's position accordingly.
+# 4. Implement a "food" source that attracts the flock. The food should be a point on the screen that
+# attracts the flock. The food's position should be updated based on the mouse clicks, and the flock
+# should try to move towards the food. You can use the matplotlib's event handling to capture
+# mouse clicks and update the food's position accordingly. The food should be drawn as a circle on the screen.
+# 5. Implement a "wind" effect that pushes the flock in a certain direction. The wind should be a vector
+# that pushes the flock in a certain direction. The wind's direction and magnitude should be controlled
+# by the user using the arrow keys. The wind's effect should be applied to the flock's velocities.
+# 6. Implement a "predator" that chases the flock. The predator should be a boid that is controlled
+# by the user using the WASD keys. The predator should be drawn in a different color and should chase
+# the flock. The predator's position should be updated based on the WASD key presses, and the flock should
+# try to avoid the predator. You can use the matplotlib's event handling to capture key presses
+# and update the predator's position accordingly.
