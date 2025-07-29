@@ -36,30 +36,36 @@ def getAverage(image):
 """Generating  the ASCII content from the Image"""
 # an ASCII image is a list of character strings
 aimg = []
-# generate the list of tile dimensions
+# generate the list of tile dimensions. Iterate through the rows of image tiles.
 for j in range(rows):
+    # calculate the top and bottom y-coordinates of each image tile in a given row as y1 and y2 as integers
     y1 = int(j*h)
-    y2 = int ((j+1)*h)
+    y2 = int((j+1)*h)
     # correct the last tile
     if j == rows-1:
+        # correct the last tile height to match the image height, ensures the bottom edge isn't truncated
         y2 = H
-    # append an empty string
+    # append an empty string as a compact way to represent current row
     aimg.append("")
+    # iterate over all the tiles in a given row, column by column.
     for i in range(cols):
         # crop the image to fit the tile
         x1 = int(i*w)
         x2 = int ((i+1)*w)
         # correct the last tile
         if i == cols-1:
+            # set the right x-coordinate to the width of the image
             x2 = W
-        # crop the image to textract the tile into another Image object
+        # crop the image to extract the tile into another Image object, extracting the tile from the complete image
         img = image.crop((x1, y1, x2, y2))
-        # get the average luminance
+        # get the average luminance of the tile taking a PIL Image object as an argument
         avg = int(getAverage(img))
         # look up the ASCII character for grayscale value (avg)
         if moreLLevels:
+            # scale the average brightness from [0,255] to [0,69]
             gsval = gscale[int((avg*69)/255)]
         else:
+            # scale the average brightness from [0,255] to [0,9]
             gsval = gscale2[int((avg*9)/255)]
-        # append the ASCII character to the string
+        # append the ASCII character to the string, loop until all rows are processed
         aimg[j] += gsval
