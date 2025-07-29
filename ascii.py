@@ -1,3 +1,21 @@
+"""
+ascii.py
+
+A Python program that convert images to ASCII art.
+
+Author: Mahesh Venkitachalam
+"""
+
+import sys, random, argparse
+import numpy as np
+import math
+
+from PIL import Image
+
+# grayscale level values from:
+# http://paulbourke.net/dataformats/asciiart/
+
+
 # Steps the program takes to generate ASCII art from an image
 # 1. Convert the input image to grayscale.
 # 2. Split the image into MxN  tiles.
@@ -9,6 +27,17 @@
 gscale1 = "$@B8&WM#*oahkbdpqwmZOoQLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
 # 10 levels of gray
 gscale2 = "@%#*+=-:. "
+
+"""Compute the average brightness"""
+# image tile is passed as a PIL Image object
+def getAverage(image):
+    # convert the image as a numpy array, a 2D array of pixel brightness values
+    im = np.array(image)
+    # get the dimensions
+    w,h = im.shape
+    # Convert the 2D array into a flat 1D array whose length is a product of the original array's
+    # width and height. Computes the average brightness level of the entire image tile.
+    return np.average(im.reshape(w*h))
 
 """Open the image using Pillow"""
 #open the file, convert to grayscale. "L" for luminance
@@ -22,16 +51,6 @@ h = w/scale
 # compute the number of rows to use in the final grid
 rows = int(H/h)
 
-"""Compute the average brightness"""
-# image tile is passed as a PIL Image object
-def getAverage(image):
-    # convert the image as a numpy array, a 2D array of pixel brightness values
-    im = np.array(image)
-    # get the dimensions
-    w,h = im.shape
-    # Convert the 2D array into a flat 1D array whose length is a product of the original array's
-    # width and height. Computes the average brightness level of the entire image tile.
-    return np.average(im.reshape(w*h))
 
 """Generating  the ASCII content from the Image"""
 # an ASCII image is a list of character strings
