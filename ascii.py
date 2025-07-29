@@ -83,3 +83,25 @@ parser.add_argument('--scale', dest='scale', required=False)
 parser.add_argument('--out', dest='outFile', required=False)
 parser.add_argument('--cols', dest="cols", required=False)
 parser.add_argument('--moreLevels', dest='moreLevels', action='store_true')
+
+"""Writing the ASCII Art strings to a text file"""
+# open a new text file using the built-in open() function
+f = open(outFile, 'w')
+# iterate through each string in the aimg list and write it to the file
+for row in aimg:
+    f.write(row + '\n')
+# clean up
+f.close()
+
+
+# Experiments!
+# 1. Run the program with the command line option --scale 1.0. How does the resulting
+# image look? Experiment with different calues for scale. Copy the output to a text editor 
+# and try setting the text to different fixed-width fonts to see how doing so affects the
+# appearance of the final image.
+# 2. Add a command line option --invert to the program to invert the generated ASCII images 
+# so that black appears white and vice verse. (Hint: try subtracting the tile brightness 
+# value from 255 during lookup.)
+# 3. Implement a command line option to pass in a different character ramp to create the
+# ASCII art like so: "$ python ascii.py --map "@$%^`."" This should create the ASCII output
+# using the given six-character ramp, where @ maps to a brightness value of and . maps to a value of 255
