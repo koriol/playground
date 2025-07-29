@@ -69,3 +69,17 @@ for j in range(rows):
             gsval = gscale2[int((avg*9)/255)]
         # append the ASCII character to the string, loop until all rows are processed
         aimg[j] += gsval
+
+"""Command line arguments"""
+parser =  argparse.ArgumentParser(description="descStr")
+# add expected arguments:
+# file: specifies image file imput as required argument
+# scale: sets the vertical scale factor for a font other than Courier
+# out: output filename for the generated ASCII art, default out.txt
+# cols: set the number of columns in the ASCII output
+# morelevels: selects the 70-level grayscale ramp instead of the default 10-level ramp
+parser.add_argument('--file', dest='imgFile', required=True)
+parser.add_argument('--scale', dest='scale', required=False)
+parser.add_argument('--out', dest='outFile', required=False)
+parser.add_argument('--cols', dest="cols", required=False)
+parser.add_argument('--moreLevels', dest='moreLevels', action='store_true')
