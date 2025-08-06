@@ -8,4 +8,10 @@
 
 # How it works:
 # 1. Read the input images, which will be drawn on to replace the tiles in the original image.
-# 2. Read the target image and split it into an MxN grid opf tiles.-
+# 2. Read the target image and split it into an MxN grid opf tiles.
+# 3. For each tile, find the best match from the input images
+# 4. Create the final mosaic arranging the selected input images in an MxN grid.
+
+
+# a k-dimensional tree divides the space into a number of non-overlapping subspaces of k dimensions.
+# Once you arrange a dataset into k-d tree, you can serach through points quickly to find the nearest neighbor.
