@@ -49,7 +49,7 @@ def getAverageRGB(image):
     """
     # get each tile image as a numpy array
     im = np.array(image)
-    # get the shape of each input image
+    # get the shape of each input image where (w,h,d) is (r,g,b) dimensions
     w,h,d = im.shape
     # get the average RGB value
     return tuple(np.average(im.reshape(w*h, d), axis=0))
@@ -58,16 +58,20 @@ def splitImage(image, size):
     """
     given the image and dimensions (rows, cols), return an m*n list of images
     """
+    # gather the dimensions of the target image
     W, H = image.size[0], image.size[1]
-    m, n = sizew, h = int(W/n), int(H/m)
+    # find the dimensions of each tile
+    m, n = size
+    w, h = int(W/n), int(H/m)
     # image list
     imgs = []
-    # generate a list of images
+    # generate a list of images, iterate through the grid dimensions and cut out and store each tile as a separate image
     for j in range(m):
         for i in range(n):
             # append cropped image
-        imgs.append(image.crop((i*w, J*h, (i+1)*w, (j+1)*h)))
-
+            # image.crop crops out a portion of the image using the upper-left and lower-right image coordinates as arguments
+        imgs.append(image.crop((i*w, j*h, (i+1)*w, (j+1)*h)))
+    # return the list of images row by row
     return imgs
 
 def getBestMatchIndex(input_avg, avgs):
@@ -91,3 +95,11 @@ def getBestMatchIndex(input_avg, avgs):
     index += 1
 
 return min_index
+
+def getBestMatchIndiciesKDT(qavgs, kdtree):
+    """
+    return indices of best Image matches based on RGB value distance uses a k-d tree
+    """
+    # e.g., [array([2.]), array([9], dtype=int64)]
+    res = list(kdtree.query(qavgs, k=1))
+    min_indicies = res[1]
