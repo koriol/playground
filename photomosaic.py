@@ -1,3 +1,11 @@
+"""
+photomosaic.py
+
+Creates a photomosaic given a target image and a folder of input images.
+
+Author: Katie O
+"""
+
 # This project practices the following:
 # - Create images using the Python Imaging Library (PIL)
 # - Cpmpute the average RGB value of an image.
@@ -16,32 +24,28 @@
 # a k-dimensional tree divides the space into a number of non-overlapping subspaces of k dimensions.
 # Once you arrange a dataset into k-d tree, you can serach through points quickly to find the nearest neighbor.
 
+
+import os, random, argparse
+from PIL import Image
 import numpy as np
+from scipy.spatial import KDTree
+import timeit
 
+def getAverageRGBOld(image):
+    """
+    given PIL Image, return average value of color as (r, g, b)
+    """
+    # no. of pixels in image
+    npixels = image.size[0]*image.size[1]
+    # get colors as [(cnt1, (r1, g1, b1)), ...]
+    cols = image.getcolors(npixels)
+    # get [(c1*r1, c1*g1, c1*g2), ...]
+    sumRGB = [(x[0]*x[1][0], x[0]*x[1][2]) for x in cols]
+    # calculate (sum(ci*ri)/np, sum(ci*bi)/np)
+    # the zip gives us [(c1*r1, c2*r2, ...), (c1*g1, c1*g2, ...), ...]
+    avg = tuple([int(sum(x)/npixels) for x in zip(*sumRGB)])
+    return avg
 
-def getIages(imageDir):
-    """
-    given a directory of images, return a list of Images
-    """
-    # gather the file names in the image directory
-    files = os.listdir(imageDir)
-    images = []
-    for file in files:
-        # ensures the code works with both relative and absolute paths
-        filePath = os.path.abspath(os.path.join(imageDir, file))
-        try:
-            # explicit load so we don't run into resource crunch
-            fp = open(filePath, "rb")
-            im = Image.open(fp)
-            images.append(im)
-            # force loading the image data from file
-            im.load()
-            # close the file
-            fp.close()
-        except:
-            # skip
-            print("Invalid image: %s" % (filePath,))
-        return images
 
 def getAverageRGB(image):
     """
@@ -73,6 +77,30 @@ def splitImage(image, size):
         imgs.append(image.crop((i*w, j*h, (i+1)*w, (j+1)*h)))
     # return the list of images row by row
     return imgs
+
+def getImages(imageDir):
+    """
+    given a directory of images, return a list of Images
+    """
+    # gather the file names in the image directory
+    files = os.listdir(imageDir)
+    images = []
+    for file in files:
+        # ensures the code works with both relative and absolute paths
+        filePath = os.path.abspath(os.path.join(imageDir, file))
+        try:
+            # explicit load so we don't run into resource crunch
+            fp = open(filePath, "rb")
+            im = Image.open(fp)
+            images.append(im)
+            # force loading the image data from file
+            im.load()
+            # close the file
+            fp.close()
+        except:
+            # skip
+            print("Invalid image: %s" % (filePath,))
+        return images
 
 def getBestMatchIndex(input_avg, avgs):
     """
@@ -143,13 +171,14 @@ def createImageGrid(images, dims):
 
     return grid_img
 
+# inputs: target image, list of input images, the size of the generated photomosaic (rows, cols), flags for reusing images and using KDTree
 def createPhotomosaic(target_image, input_images, grid_size, reuse_images, use_kdt):
     """
     creates photomosaic given target and input images
     """
 
     print('splitting input image...')
-    # split target image
+    # split target image into a grid of smaller image tiles
     target_images = splitImage(target_image, grid_size)
 
     print('finding image matches...')
@@ -157,15 +186,143 @@ def createPhotomosaic(target_image, input_images, grid_size, reuse_images, use_k
     output_images = {}
     # for user feedback
     count = 0
+    # the process is lengthy so make batch_size a tenth the total number of images
     batch_size = int(len(target_images)/10)
 
     # calculate input image averages
     avgs = []
+    # iterate through the images to compute their average RGB values
     for img in input_images:
         avgs.append(getAverageRGB(img))
 
-    # compute target averages
+    # compute target image averages of each square in grid
     avgs_target = []
     for img in target_images:
         # target subimage average
         avgs_target.append(getAverageRGB(img))
+
+    # use k-d tree for average match?
+    if use_kdt:
+        # create k-d tree using the list of average RGB values from the input images
+        kdtree = KDTree(avgs)
+        # query k-d tree and retrieve the indices of the best matches by passing in avgs_target and the KDTree object to bestmatch function
+        match_indices = getBestMatchIndicesKDT(avgs_target, kdtree)
+        # process matches, iterate through all matching indices
+        for match_index in match_indices:
+            # find the corresponding input images, append them to the list of output_images
+            output_images.append(input_images[match_index])
+    else:
+        # use linear search, iterate through the averages of RGB
+        for avg in avgs_target:
+            # for each tile, search for the closest match in the list of averages for the input images using the bestMatch function
+            match_index = getBestMatchIndex(avg, avgs)
+            # results returned as an index, used to retrieve the Image object and store in output_images list
+            output_images.append(input_images[match_index])
+            # user feedback after every batch_size (10 images)
+            if count > 0 and batch_size > 10 and count % batch_size == 0:
+                print('processed %d of %d...' %(count, len(target_images)))
+            count += 1
+            # remove selected image from input if flag set so it won't be reused
+            if not reuse_images:
+                input_images.remove(match)
+    
+    print('creating mosaic...')
+    # draw mosaic to image
+    mosaic_image = createImageGrid(output_images, grid_size)
+    # return mosaic
+    return mosaic_image
+
+# gather our code in a main() function
+def main():
+    # command line args are in sys.argv[1], sys.argv[2]...
+    # sys.arg[0] is the script name itself and can be ignored
+
+    # parse arguments
+    parser = argparse.ArgumentParser(description='Cretes a photomosaic from input images')
+    # add arguments
+    parser.add_argument('--target-image', dest='target_image', required=True)
+    parser.add_argument('--input-folder', dest='input_folder', required=True)
+    parser.add_argument('--grid-size', nargs=2, dest='grid_size', required=True)
+    parser.add_argument('--output-file', dest='outfile', required=False)
+    parser.add_argument('--kdt', action='store_true', required=False)
+    
+    args = parser.parse_args()
+
+    #start timing
+    start = timeit.default_timer()
+
+    ##### INPUTS #####
+
+    # target image
+    target_image = Image.open(args.target_image)
+
+    # input images
+    print('reading input folder...')
+    input_images = getImages(arg.inpu_folder)
+
+    # check if any valid input images found
+    if input_images == []
+    print('No input images found in %s. Exiting.' % (args.input_folder, ))
+    exit()
+
+    # shuffle list - to get a more varied output?
+    random.shuffle(input_images)
+
+    # size of grid
+    grid_size = (int(args.grid_size[0]), int(args.grid_size[1]))
+
+    # output
+    output_filename = 'mosaic.png'
+    if args.outfile:
+        output_filename = args.outfile
+
+    # reuse any image in input
+    reuse_images = True
+
+    # resize the input to fit original image size?
+    resize_input = True
+    # use k-d trees for matching
+    use_kdt = False
+    if args.kdt:
+        use_kdt = True
+
+##### END INPUTS #####
+
+    print 9'starting photomosaic creation...')
+
+    # if images can't be reused, ensure m*n <= num_of_images
+    if not reuse_images:
+        if grid_size[0]*grid_size[1] > len(input_images):
+            print('grid size less than number of images')
+            exit()
+        
+    # resizing input
+    if resize_input:
+        print('resizing images...')
+        # for given grid size, compute max dims w,h of tiles
+        dims = (int(target_image.size[0]/grid_size[1]),
+                int(target_image.size[1]/grid_size[0]))
+        print("max tile dims: %s" % (dims,))
+        # resize
+        for img in input_images:
+            img.thumbnail(dims)
+
+    # setup time
+    t1 = timeie.default_timer()
+
+    # create photomosaic
+    mosaic_image.save(output_filename, 'PNG')
+
+    print("saved output to %s" % (output_filename,))
+    print('done.')
+
+    # creation time
+    t2 = timeit.default_timer()
+
+    print('Execution time:  setup: %f seconds' % (t1 - start, ))
+    print('Execution time:  creation: %f seconds' % (t2 - t1, ))
+    print('Execution time:  total: %f seconds' % (t2 - start, ))
+
+# standard boilerplate to call the main() function to begin the program
+if __name__ == '__main__':
+    main()
